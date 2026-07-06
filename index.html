@@ -1,0 +1,363 @@
+ <!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEB Electricity Bill Calculator</title>
+    
+    <meta name="theme-color" content="#0056b3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22CEB%20Bill%20Calculator%22%2C%22short_name%22%3A%22CEB%20Calc%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23eef2f5%22%2C%22theme_color%22%3A%22%230056b3%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage/svg+xml%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20512%20512%27%3E%3Crect%20width=%27100%25%27%20height=%27100%25%27%20fill=%27%230056b3%27/%3E%3Ccircle%20cx=%27256%27%20cy=%27256%27%20r=%27180%27%20fill=%27none%27%20stroke=%27white%27%20stroke-width=%2730%27/%3E%3Cpolygon%20points=%27270%2C100%20140%2C290%20250%2C290%20240%2C412%20370%2C220%20260%2C220%27%20fill=%27%23ffcc00%27/%3E%3C/svg%3E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image/svg+xml%22%7D%5D%7D">
+
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f4f6f9;
+            --accent-color: #28a745;
+            --text-color: #333;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f5;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .calculator-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 22px;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #004085;
+        }
+
+        .results {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: var(--secondary-color);
+            border-radius: var(--border-radius);
+            display: none;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #ddd;
+        }
+
+        .sub-breakdown {
+            padding-left: 15px;
+            font-size: 14px;
+            color: #444;
+            border-bottom: none;
+            margin-bottom: 6px;
+        }
+
+        .total-amount {
+            font-weight: bold;
+            color: var(--accent-color);
+            font-size: 18px;
+            border-bottom: none;
+            margin-top: 10px;
+        }
+
+        h4 {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 15px;
+        }
+
+        /* App එකක් ලෙස Install කිරීමට ඇති බොත්තම */
+        .install-btn {
+            background-color: #ffc107;
+            color: #212529;
+            display: none;
+            margin-bottom: 15px;
+        }
+        .install-btn:hover {
+            background-color: #e0a800;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <h2>CEB Dynamic Bill Calculator</h2>
+    
+    <button id="btnInstall" class="install-btn">Install App (ඇප් එක ස්ථාපනය කරන්න)</button>
+
+    <div class="form-group">
+        <label for="tariff">Tariff Category</label>
+        <select id="tariff">
+            <option value="D-1">D-1 (ගෘහස්ථ)</option>
+            <option value="G-1">G-1 (පොදු කාර්‍ය)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="days">Number of Days (දින ගණන)</label>
+        <input type="number" id="days" value="30" min="1">
+    </div>
+
+    <div class="form-group">
+        <label for="units">Total Units Consumed (ඒකක ප්‍රමාණය)</label>
+        <input type="number" id="units" value="90" min="0">
+    </div>
+
+    <button onclick="calculateCEBBill()">Calculate Bill</button>
+
+    <div class="results" id="resultsBox">
+        <h3>Calculation Summary</h3>
+        
+        <div id="breakdownContainer"></div>
+
+        <div class="result-row" style="font-weight: bold; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px;">
+            <span>Total Energy Charge (LKR):</span>
+            <span id="energyChargeDisp">0.00</span>
+        </div>
+        <div class="result-row">
+            <span>Fixed Charge (ස්ථාවර ගාස්තුව - LKR):</span>
+            <span id="fixedChargeDisp">0.00</span>
+        </div>
+        <div class="result-row">
+            <span>Price without Tax (බදු රහිත මිල - LKR):</span>
+            <span id="priceNoTax">0.00</span>
+        </div>
+        <div class="result-row">
+            <span>SSCL Tax:</span>
+            <span id="ssclTax">0.00</span>
+        </div>
+        <div class="result-row total-amount">
+            <span>Total Amount (මුළු මුදල - LKR):</span>
+            <span id="totalAmount">0.00</span>
+        </div>
+    </div>
+</div>
+
+<script>
+function calculateCEBBill() {
+    try {
+        const tariff = document.getElementById('tariff').value;
+        const days = parseFloat(document.getElementById('days').value);
+        const units = parseFloat(document.getElementById('units').value);
+
+        if (isNaN(days) || isNaN(units) || days <= 0 || units < 0) {
+            alert("කරුණාකර නිවැරදි දත්ත ඇතුළත් කරන්න.");
+            return;
+        }
+
+        let factor = days / 30;
+        let energyCharge = 0;
+        let baseFixed = 0;
+        let normalizedUnits = units / factor;
+        let breakdownHTML = "<h4>Energy Charge Breakdown:</h4>";
+
+        if (tariff === "D-1") {
+            let maxProgressiveLimit = days * 6;
+
+            if (normalizedUnits <= 60) {
+                let limit1 = 30 * factor;
+                if (units <= limit1) {
+                    energyCharge = units * 5;
+                    breakdownHTML += "<div class='result-row sub-breakdown'><span>5.00 X " + Math.round(units) + " =</span><span>" + energyCharge.toFixed(2) + "</span></div>";
+                    baseFixed = 80;
+                } else {
+                    let u1 = limit1;
+                    let u2 = units - limit1;
+                    let c1 = u1 * 5;
+                    let c2 = u2 * 9;
+                    energyCharge = c1 + c2;
+                    breakdownHTML += "<div class='result-row sub-breakdown'><span>5.00 X " + Math.round(u1) + " =</span><span>" + c1.toFixed(2) + "</span></div>";
+                    breakdownHTML += "<div class='result-row sub-breakdown'><span>9.00 X " + Math.round(u2) + " =</span><span>" + c2.toFixed(2) + "</span></div>";
+                    baseFixed = 210;
+                }
+            } 
+            else if (units > maxProgressiveLimit) {
+                let u1 = maxProgressiveLimit;
+                let u2 = units - maxProgressiveLimit;
+                let c1 = u1 * 32.50;
+                let c2 = u2 * 100.00;
+                energyCharge = c1 + c2;
+
+                breakdownHTML += "<div class='result-row sub-breakdown'><span>32.50 X " + Math.round(u1) + " =</span><span>" + c1.toFixed(2) + "</span></div>";
+                breakdownHTML += "<div class='result-row sub-breakdown'><span>100.00 X " + Math.round(u2) + " =</span><span>" + c2.toFixed(2) + "</span></div>";
+                baseFixed = 2500;
+            } 
+            else {
+                let limit1 = 60 * factor;
+                let limit2 = 90 * factor;
+                let limit3 = 120 * factor;
+
+                let rem = units;
+
+                // Slab 1
+                let u1 = Math.min(rem, limit1);
+                let c1 = u1 * 14;
+                energyCharge += c1;
+                breakdownHTML += "<div class='result-row sub-breakdown'><span>14.00 X " + Math.round(u1) + " =</span><span>" + c1.toFixed(2) + "</span></div>";
+                rem -= u1;
+                
+                // Slab 2
+                if (rem > 0) {
+                    let u2 = Math.min(rem, limit2 - limit1);
+                    let c2 = u2 * 20;
+                    energyCharge += c2;
+                    breakdownHTML += "<div class='result-row sub-breakdown'><span>20.00 X " + Math.round(u2) + " =</span><span>" + c2.toFixed(2) + "</span></div>";
+                    rem -= u2;
+                }
+                // Slab 3
+                if (rem > 0) {
+                    let u3 = Math.min(rem, limit3 - limit2);
+                    let c3 = u3 * 28;
+                    energyCharge += c3;
+                    breakdownHTML += "<div class='result-row sub-breakdown'><span>28.00 X " + Math.round(u3) + " =</span><span>" + c3.toFixed(2) + "</span></div>";
+                    rem -= u3;
+                }
+                // Slab 4
+                if (rem > 0) {
+                    let u4 = rem;
+                    let c4 = u4 * 44;
+                    energyCharge += c4;
+                    breakdownHTML += "<div class='result-row sub-breakdown'><span>44.00 X " + Math.round(u4) + " =</span><span>" + c4.toFixed(2) + "</span></div>";
+                }
+
+                if (normalizedUnits <= 90) baseFixed = 400;
+                else if (normalizedUnits <= 120) baseFixed = 1000;
+                else baseFixed = 1500;
+            }
+        } else if (tariff === "G-1") {
+            let gThreshold = days * 6;
+            
+            if (units <= gThreshold) {
+                energyCharge = units * 27;
+                breakdownHTML += "<div class='result-row sub-breakdown'><span>27.00 X " + Math.round(units) + " =</span><span>" + energyCharge.toFixed(2) + "</span></div>";
+                baseFixed = 500;
+            } else {
+                energyCharge = units * 36;
+                breakdownHTML += "<div class='result-row sub-breakdown'><span>36.00 X " + Math.round(units) + " =</span><span>" + energyCharge.toFixed(2) + "</span></div>";
+                baseFixed = 1600;
+            }
+        }
+
+        let finalFixed = baseFixed;
+        if (days >= 54) {
+            finalFixed = baseFixed * factor;
+        }
+
+        let finalPriceNoTax = energyCharge + finalFixed;
+        let ssclTax = finalPriceNoTax * 0.02564102564;
+        let totalAmount = finalPriceNoTax + ssclTax;
+
+        document.getElementById('breakdownContainer').innerHTML = breakdownHTML;
+        document.getElementById('energyChargeDisp').innerText = energyCharge.toFixed(2);
+        document.getElementById('fixedChargeDisp').innerText = finalFixed.toFixed(2);
+        document.getElementById('priceNoTax').innerText = finalPriceNoTax.toFixed(2);
+        document.getElementById('ssclTax').innerText = ssclTax.toFixed(2);
+        document.getElementById('totalAmount').innerText = totalAmount.toFixed(2);
+        
+        document.getElementById('resultsBox').style.display = 'block';
+
+    } catch (error) {
+        alert("ගණනය කිරීමේ දෝෂයක් සිදුවිය: " + error.message);
+    }
+}
+
+// ---------------- PWA Installation Script ----------------
+let deferredPrompt;
+const btnInstall = document.getElementById('btnInstall');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    btnInstall.style.display = 'block'; // Install කළ හැකි නම් පමණක් කහ පාට බොත්තම පෙන්වයි
+});
+
+btnInstall.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            btnInstall.style.display = 'none';
+        }
+        deferredPrompt = null;
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    btnInstall.style.display = 'none';
+    alert("ඇප් එක සාර්ථකව ස්ථාපනය කරන ලදී!");
+});
+
+// Offline වැඩ කිරීමට අවශ්‍ය Service Worker එක (Data URI ක්‍රමයට සක්‍රීය කිරීම)
+if ('serviceWorker' in navigator) {
+    const swCode = "self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); });";
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(err => console.log("SW Error", err));
+}
+</script>
+</body>
+</html>
+
